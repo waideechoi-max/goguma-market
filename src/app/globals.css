@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --goguma-orange: #FF6B35;
+  --goguma-purple: #7B2D8B;
+  --goguma-yellow: #FFE135;
+  --goguma-cream: #FFF8E7;
+  --goguma-dark: #2C1810;
+  --goguma-green: #4CAF50;
+  --goguma-red: #E53E3E;
+}
+
+body {
+  background-color: var(--goguma-cream);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--goguma-dark);
+}
+
+/* 카툰 스타일 버튼 */
+.btn-cartoon {
+  border: 3px solid var(--goguma-dark);
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  box-shadow: 4px 4px 0px var(--goguma-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+}
+
+.btn-cartoon:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px var(--goguma-dark);
+}
+
+.btn-cartoon:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px var(--goguma-dark);
+}
+
+.btn-primary {
+  background-color: var(--goguma-orange);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--goguma-yellow);
+  color: var(--goguma-dark);
+}
+
+.btn-ghost {
+  background-color: white;
+  color: var(--goguma-dark);
+}
+
+/* 카툰 스타일 카드 */
+.card-cartoon {
+  background: white;
+  border: 3px solid var(--goguma-dark);
+  border-radius: 20px;
+  box-shadow: 6px 6px 0px var(--goguma-dark);
+  padding: 32px;
+}
+
+/* 카툰 스타일 인풋 */
+.input-cartoon {
+  width: 100%;
+  border: 3px solid var(--goguma-dark);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: white;
+  color: var(--goguma-dark);
+  outline: none;
+  transition: box-shadow 0.2s;
+}
+
+.input-cartoon:focus {
+  box-shadow: 3px 3px 0px var(--goguma-orange);
+  border-color: var(--goguma-orange);
+}
+
+.input-cartoon::placeholder {
+  color: #bbb;
+  font-weight: 400;
+}
+
+/* 에러 박스 */
+.error-box {
+  background: #FFE5E5;
+  border: 3px solid var(--goguma-red);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--goguma-red);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* 성공 박스 */
+.success-box {
+  background: #E8F5E9;
+  border: 3px solid var(--goguma-green);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--goguma-green);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
