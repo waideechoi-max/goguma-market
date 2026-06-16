@@ -79,7 +79,7 @@ export default async function ProductDetailPage({
   // 댓글 정보
   const { data: commentsRaw } = await supabase
     .from('comments')
-    .select('id, content, created_at, user_id')
+    .select('id, content, created_at, user_id, parent_id')
     .eq('product_id', id)
     .order('created_at', { ascending: true })
 

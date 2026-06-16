@@ -9,9 +9,14 @@ export type CommentRow = {
   created_at: string
   user_id: string
   nickname: string
+  parent_id: string | null
 }
 
-export async function addComment(productId: string, content: string): Promise<{ comment?: CommentRow; error?: string }> {
+export async function addComment(
+  productId: string,
+  content: string,
+  parentId?: string,
+): Promise<{ comment?: CommentRow; error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: '로그인이 필요해요.' }
@@ -24,8 +29,13 @@ export async function addComment(productId: string, content: string): Promise<{ 
 
   const { data: comment, error } = await supabase
     .from('comments')
-    .insert({ product_id: productId, user_id: user.id, content })
-    .select('id, content, created_at, user_id')
+    .insert({
+      product_id: productId,
+      user_id: user.id,
+      content,
+      parent_id: parentId ?? null,
+    })
+    .select('id, content, created_at, user_id, parent_id')
     .single()
 
   if (error || !comment) return { error: '댓글 등록에 실패했어요.' }
