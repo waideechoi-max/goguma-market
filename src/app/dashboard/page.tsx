@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { signOut } from "../auth/actions";
+import ProfileEditForm from "./ProfileEditForm";
 
 export default async function DashboardPage({
   searchParams,
@@ -65,12 +67,25 @@ export default async function DashboardPage({
 
         {/* 유저 프로필 카드 */}
         <div className="card-cartoon mb-8">
-          <div className="flex items-center gap-5">
-            <div className="text-6xl w-20 h-20 rounded-full border-4 flex items-center justify-center bg-amber-50"
-              style={{ borderColor: "var(--goguma-dark)" }}>
-              🍠
-            </div>
-            <div>
+          <div className="flex items-start gap-5">
+            {/* 아바타 */}
+            {profile?.avatar_url ? (
+              <Image
+                src={profile.avatar_url}
+                alt="프로필 사진"
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-full object-cover border-4 flex-shrink-0"
+                style={{ borderColor: "var(--goguma-dark)" }}
+              />
+            ) : (
+              <div className="text-6xl w-20 h-20 rounded-full border-4 flex items-center justify-center bg-amber-50 flex-shrink-0"
+                style={{ borderColor: "var(--goguma-dark)" }}>
+                🍠
+              </div>
+            )}
+
+            <div className="flex-1 min-w-0">
               <h2 className="text-2xl font-black" style={{ color: "var(--goguma-dark)" }}>
                 {profile?.nickname || "닉네임 없음"}
               </h2>
@@ -80,6 +95,19 @@ export default async function DashboardPage({
               <p className="text-xs font-medium mt-1" style={{ color: "#aaa" }}>
                 가입일: {new Date(user.created_at).toLocaleDateString("ko-KR")}
               </p>
+              {profile?.bio && (
+                <p className="text-sm font-medium mt-3 whitespace-pre-line"
+                  style={{ color: "#555" }}>
+                  {profile.bio}
+                </p>
+              )}
+              <div className="mt-3">
+                <ProfileEditForm
+                  userId={user.id}
+                  initialAvatarUrl={profile?.avatar_url ?? null}
+                  initialBio={profile?.bio ?? null}
+                />
+              </div>
             </div>
           </div>
         </div>
