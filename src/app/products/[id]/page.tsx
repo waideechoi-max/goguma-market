@@ -241,7 +241,7 @@ export default async function ProductDetailPage({
           </div>
         </div>
 
-        {/* 액션 버튼 */}
+        {/* 액션 버튼 (구매자용) */}
         {!isMyProduct && (
           <div className="flex flex-col gap-3">
             <button
@@ -253,16 +253,6 @@ export default async function ProductDetailPage({
           </div>
         )}
 
-        {isMyProduct && (
-          <div className="flex flex-col gap-3">
-            <Link href={`/products/${id}/edit`} className="btn-cartoon btn-secondary w-full text-center"
-              style={{ fontSize: '1rem' }}>
-              ✏️ 판매글 수정
-            </Link>
-            <DeleteButton id={id} />
-          </div>
-        )}
-
         {/* 댓글 섹션 */}
         <div className="mt-4">
           <CommentSection
@@ -271,6 +261,17 @@ export default async function ProductDetailPage({
             currentUserId={user?.id ?? null}
           />
         </div>
+
+        {/* 수정/삭제 버튼 (판매자용) */}
+        {isMyProduct && (
+          <div className="flex flex-col gap-3 mt-4">
+            <Link href={`/products/${id}/edit`} className="btn-cartoon btn-secondary w-full text-center"
+              style={{ fontSize: '1rem' }}>
+              ✏️ 판매글 수정
+            </Link>
+            <DeleteButton id={id} />
+          </div>
+        )}
       </main>
     </div>
   )
