@@ -4,6 +4,28 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 
+export async function toggleLike(productId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요해요.' }
+
+  const { data: existing } = await supabase
+    .from('likes')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('product_id', productId)
+    .single()
+
+  if (existing) {
+    await supabase.from('likes').delete().eq('id', existing.id)
+  } else {
+    await supabase.from('likes').insert({ user_id: user.id, product_id: productId })
+  }
+
+  revalidatePath(`/products/${productId}`)
+  revalidatePath('/products')
+}
+
 function urlToStoragePath(url: string): string {
   // https://....supabase.co/storage/v1/object/public/product-images/USER_ID/FILE
   const marker = '/product-images/'

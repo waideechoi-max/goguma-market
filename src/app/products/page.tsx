@@ -37,6 +37,16 @@ export default async function ProductsPage({
     .select('id, title, price, category, condition, status, created_at, user_id, image_urls')
     .order('created_at', { ascending: false })
 
+  const productIds = products?.map(p => p.id) ?? []
+  const { data: likesData } = productIds.length > 0
+    ? await supabase.from('likes').select('product_id').in('product_id', productIds)
+    : { data: [] }
+
+  const likeCountMap = (likesData ?? []).reduce((acc, l) => {
+    acc[l.product_id] = (acc[l.product_id] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
   return (
     <div className="min-h-screen" style={{ background: 'var(--goguma-cream)' }}>
       {/* 상단 네비게이션 */}
@@ -154,11 +164,16 @@ export default async function ProductsPage({
                   </p>
                 </div>
 
-                {/* 가격 */}
+                {/* 가격 + 좋아요 */}
                 <div className="text-right flex-shrink-0">
                   <p className="font-black text-base" style={{ color: 'var(--goguma-orange)' }}>
                     {formatPrice(product.price)}
                   </p>
+                  {(likeCountMap[product.id] ?? 0) > 0 && (
+                    <p className="text-xs font-medium mt-1" style={{ color: '#e53e3e' }}>
+                      ❤️ {likeCountMap[product.id]}
+                    </p>
+                  )}
                 </div>
               </Link>
             )

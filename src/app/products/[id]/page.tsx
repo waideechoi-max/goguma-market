@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { signOut } from '../../auth/actions'
 import DeleteButton from './DeleteButton'
 import ImageGallery from './ImageGallery'
+import LikeButton from './LikeButton'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   '디지털/가전': '📱',
@@ -58,6 +59,21 @@ export default async function ProductDetailPage({
     .select('nickname')
     .eq('id', product.user_id)
     .single()
+
+  // 좋아요 정보
+  const { data: likesRaw } = await supabase
+    .from('likes')
+    .select('user_id')
+    .eq('product_id', id)
+    .order('created_at', { ascending: false })
+
+  const likeCount = likesRaw?.length ?? 0
+  const isLiked = !!(user && likesRaw?.some(l => l.user_id === user.id))
+
+  const likerIds = likesRaw?.map(l => l.user_id) ?? []
+  const { data: likerProfiles } = likerIds.length > 0
+    ? await supabase.from('profiles').select('id, nickname').in('id', likerIds)
+    : { data: [] }
 
   const badge = STATUS_BADGE[product.status] ?? STATUS_BADGE['판매중']
   const emoji = CATEGORY_EMOJI[product.category] ?? '📦'
@@ -165,6 +181,24 @@ export default async function ProductDetailPage({
               판매자가 설명을 작성하지 않았어요.
             </p>
           )}
+
+          {/* 구분선 */}
+          <div className="border-t-2 border-dashed my-4" style={{ borderColor: '#eee' }} />
+
+          {/* 좋아요 */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <LikeButton
+              productId={id}
+              initialLiked={isLiked}
+              initialCount={likeCount}
+              isLoggedIn={!!user}
+            />
+            {likeCount > 0 && (
+              <p className="text-xs font-medium" style={{ color: '#aaa' }}>
+                {(likerProfiles ?? []).map(p => p.nickname ?? '고구마 이웃').join(', ')} 님이 좋아해요
+              </p>
+            )}
+          </div>
         </div>
 
         {/* 판매자 정보 */}
