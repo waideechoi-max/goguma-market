@@ -249,12 +249,12 @@ export default async function ProductDetailPage({
                 </p>
               )}
             </div>
-            {isMyProduct && (
-              <span className="ml-auto px-2 py-1 rounded-full text-xs font-bold flex-shrink-0"
-                style={{ background: '#fff3e0', color: 'var(--goguma-orange)', border: '1.5px solid var(--goguma-orange)' }}>
-                내 판매글
-              </span>
-            )}
+            <Link
+              href={`/sellers/${product.user_id}`}
+              className="ml-auto px-2 py-1 rounded-full text-xs font-bold flex-shrink-0 hover:opacity-80 transition-opacity"
+              style={{ background: '#fff3e0', color: 'var(--goguma-orange)', border: '1.5px solid var(--goguma-orange)' }}>
+              판매글 모아보기 →
+            </Link>
           </div>
         </div>
 
