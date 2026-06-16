@@ -5,6 +5,7 @@ import { signOut } from '../../auth/actions'
 import DeleteButton from './DeleteButton'
 import ImageGallery from './ImageGallery'
 import LikeButton from './LikeButton'
+import CommentSection from './CommentSection'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   '디지털/가전': '📱',
@@ -74,6 +75,23 @@ export default async function ProductDetailPage({
   const { data: likerProfiles } = likerIds.length > 0
     ? await supabase.from('profiles').select('id, nickname').in('id', likerIds)
     : { data: [] }
+
+  // 댓글 정보
+  const { data: commentsRaw } = await supabase
+    .from('comments')
+    .select('id, content, created_at, user_id')
+    .eq('product_id', id)
+    .order('created_at', { ascending: true })
+
+  const commenterIds = [...new Set((commentsRaw ?? []).map(c => c.user_id))]
+  const { data: commenterProfiles } = commenterIds.length > 0
+    ? await supabase.from('profiles').select('id, nickname').in('id', commenterIds)
+    : { data: [] }
+
+  const comments = (commentsRaw ?? []).map(c => ({
+    ...c,
+    nickname: commenterProfiles?.find(p => p.id === c.user_id)?.nickname ?? '고구마 이웃',
+  }))
 
   const badge = STATUS_BADGE[product.status] ?? STATUS_BADGE['판매중']
   const emoji = CATEGORY_EMOJI[product.category] ?? '📦'
@@ -244,6 +262,15 @@ export default async function ProductDetailPage({
             <DeleteButton id={id} />
           </div>
         )}
+
+        {/* 댓글 섹션 */}
+        <div className="mt-4">
+          <CommentSection
+            productId={id}
+            initialComments={comments}
+            currentUserId={user?.id ?? null}
+          />
+        </div>
       </main>
     </div>
   )
