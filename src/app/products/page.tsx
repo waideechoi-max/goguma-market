@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '../auth/actions'
 
@@ -33,7 +34,7 @@ export default async function ProductsPage({
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, title, price, category, condition, status, created_at, user_id')
+    .select('id, title, price, category, condition, status, created_at, user_id, image_urls')
     .order('created_at', { ascending: false })
 
   return (
@@ -120,10 +121,18 @@ export default async function ProductsPage({
               <Link key={product.id} href={`/products/${product.id}`}
                 className="card-cartoon flex items-center gap-4 hover:scale-[1.01] transition-transform"
                 style={{ padding: '20px' }}>
-                {/* 카테고리 아이콘 */}
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-3xl"
+                {/* 썸네일 */}
+                <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-3xl"
                   style={{ background: 'var(--goguma-cream)', border: '2px solid #eee' }}>
-                  {emoji}
+                  {product.image_urls?.[0] ? (
+                    <Image
+                      src={product.image_urls[0]}
+                      alt={product.title}
+                      width={56}
+                      height={56}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : emoji}
                 </div>
 
                 {/* 내용 */}

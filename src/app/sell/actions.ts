@@ -21,6 +21,8 @@ export async function createProduct(prevState: { error: string } | null, formDat
   if (!priceRaw || isNaN(Number(priceRaw))) return { error: '가격을 숫자로 입력해 주세요.' }
   if (Number(priceRaw) < 0) return { error: '가격은 0원 이상이어야 해요.' }
 
+  const imageUrls = formData.getAll('image_url') as string[]
+
   const { error } = await supabase.from('products').insert({
     user_id: user.id,
     title,
@@ -28,6 +30,7 @@ export async function createProduct(prevState: { error: string } | null, formDat
     price: Number(priceRaw),
     category,
     condition,
+    image_urls: imageUrls,
   })
 
   if (error) {

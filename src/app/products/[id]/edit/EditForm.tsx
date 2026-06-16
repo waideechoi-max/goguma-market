@@ -1,6 +1,8 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useTransition } from 'react'
+import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
 import { updateProduct } from '../actions'
 
 const CATEGORIES = ['디지털/가전', '의류/잡화', '가구/인테리어', '도서/음반', '스포츠/레저', '생활/주방', '기타']
@@ -24,17 +26,80 @@ type Product = {
   category: string
   condition: string
   status: string
+  image_urls: string[] | null
 }
 
 export default function EditForm({ product }: { product: Product }) {
-  const boundUpdate = updateProduct.bind(null, product.id)
-  const [state, action, pending] = useActionState(boundUpdate, null)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  const initialUrls = product.image_urls ?? []
+  const [keptUrls, setKeptUrls] = useState<string[]>(initialUrls)
+  const [newFiles, setNewFiles] = useState<File[]>([])
+  const [newPreviews, setNewPreviews] = useState<string[]>([])
+
+  const totalCount = keptUrls.length + newFiles.length
+
+  function removeExisting(url: string) {
+    setKeptUrls(prev => prev.filter(u => u !== url))
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selected = Array.from(e.target.files ?? [])
+    const remaining = 5 - totalCount
+    const toAdd = selected.slice(0, remaining)
+    setNewPreviews(prev => [...prev, ...toAdd.map(f => URL.createObjectURL(f))])
+    setNewFiles(prev => [...prev, ...toAdd])
+    e.target.value = ''
+  }
+
+  function removeNew(i: number) {
+    URL.revokeObjectURL(newPreviews[i])
+    setNewPreviews(prev => prev.filter((_, idx) => idx !== i))
+    setNewFiles(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+
+    const formData = new FormData(e.currentTarget)
+
+    // 삭제할 URL (원래 있었지만 유저가 X 누른 것들)
+    const deletedUrls = initialUrls.filter(u => !keptUrls.includes(u))
+    deletedUrls.forEach(url => formData.append('delete_url', url))
+
+    // 유지할 기존 URL
+    keptUrls.forEach(url => formData.append('image_url', url))
+
+    // 새 파일 업로드
+    if (newFiles.length > 0) {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setError('로그인이 필요해요.'); return }
+
+      for (const file of newFiles) {
+        const ext = file.name.split('.').pop() ?? 'jpg'
+        const path = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`
+        const { error: uploadError } = await supabase.storage
+          .from('product-images')
+          .upload(path, file)
+        if (!uploadError) {
+          const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+          formData.append('image_url', data.publicUrl)
+        }
+      }
+    }
+
+    startTransition(async () => {
+      const result = await updateProduct(product.id, null, formData)
+      if (result?.error) setError(result.error)
+    })
+  }
 
   return (
-    <form action={action} className="flex flex-col gap-6">
-      {state?.error && (
-        <div className="error-box">{state.error}</div>
-      )}
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {error && <div className="error-box">{error}</div>}
 
       {/* 판매 상태 */}
       <div className="flex flex-col gap-2">
@@ -57,6 +122,49 @@ export default function EditForm({ product }: { product: Product }) {
               <span style={{ color: s.color }}>{s.label}</span>
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* 사진 */}
+      <div className="flex flex-col gap-2">
+        <label className="font-black text-sm" style={{ color: 'var(--goguma-dark)' }}>
+          사진 <span className="font-normal text-xs" style={{ color: '#aaa' }}>(최대 5장)</span>
+        </label>
+        <div className="flex gap-2 flex-wrap">
+          {/* 기존 이미지 */}
+          {keptUrls.map((url, i) => (
+            <div key={`existing-${i}`} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0"
+              style={{ border: '2px solid var(--goguma-dark)' }}>
+              <Image src={url} alt={`기존 사진 ${i + 1}`} fill className="object-cover" />
+              <button type="button" onClick={() => removeExisting(url)}
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black leading-none"
+                style={{ background: 'rgba(44,24,16,0.85)', color: 'white', lineHeight: 1 }}>
+                ×
+              </button>
+            </div>
+          ))}
+          {/* 새 이미지 미리보기 */}
+          {newPreviews.map((url, i) => (
+            <div key={`new-${i}`} className="relative w-20 h-20 rounded-xl overflow-hidden flex-shrink-0"
+              style={{ border: '2px solid var(--goguma-orange)' }}>
+              <Image src={url} alt={`새 사진 ${i + 1}`} fill className="object-cover" unoptimized />
+              <button type="button" onClick={() => removeNew(i)}
+                className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-xs font-black leading-none"
+                style={{ background: 'rgba(255,107,53,0.9)', color: 'white', lineHeight: 1 }}>
+                ×
+              </button>
+            </div>
+          ))}
+          {/* 추가 버튼 */}
+          {totalCount < 5 && (
+            <label className="w-20 h-20 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer flex-shrink-0"
+              style={{ border: '2px dashed #ccc', background: '#fafafa' }}>
+              <span className="text-2xl">📷</span>
+              <span className="text-xs font-medium" style={{ color: '#aaa' }}>{totalCount}/5</span>
+              <input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden" onChange={handleFileChange} />
+            </label>
+          )}
         </div>
       </div>
 
@@ -153,10 +261,10 @@ export default function EditForm({ product }: { product: Product }) {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={isPending}
         className="btn-cartoon btn-primary w-full"
-        style={{ fontSize: '1.1rem', opacity: pending ? 0.7 : 1 }}>
-        {pending ? '저장 중... ⏳' : '✅ 수정 완료'}
+        style={{ fontSize: '1.1rem', opacity: isPending ? 0.7 : 1 }}>
+        {isPending ? '저장 중... ⏳' : '✅ 수정 완료'}
       </button>
     </form>
   )

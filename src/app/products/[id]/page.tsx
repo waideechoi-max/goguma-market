@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { signOut } from '../../auth/actions'
@@ -102,14 +103,39 @@ export default async function ProductDetailPage({
           </div>
         )}
 
-        {/* 이미지 자리 (추후 추가 예정) */}
-        <div className="card-cartoon flex items-center justify-center mb-6"
-          style={{ height: '200px', background: 'var(--goguma-cream)' }}>
-          <div className="text-center">
-            <div className="text-7xl mb-2">{emoji}</div>
-            <p className="text-xs font-medium" style={{ color: '#ccc' }}>사진 준비중</p>
+        {/* 이미지 갤러리 */}
+        {product.image_urls && product.image_urls.length > 0 ? (
+          <div className="mb-6">
+            <div className="card-cartoon overflow-hidden p-0" style={{ aspectRatio: '4/3' }}>
+              <div className="relative w-full h-full" style={{ minHeight: '240px' }}>
+                <Image
+                  src={product.image_urls[0]}
+                  alt={product.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            </div>
+            {product.image_urls.length > 1 && (
+              <div className="flex gap-2 mt-2 overflow-x-auto pb-1">
+                {product.image_urls.map((url: string, i: number) => (
+                  <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0"
+                    style={{ border: '2px solid var(--goguma-dark)' }}>
+                    <Image src={url} alt={`사진 ${i + 1}`} fill className="object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="card-cartoon flex items-center justify-center mb-6"
+            style={{ height: '200px', background: 'var(--goguma-cream)' }}>
+            <div className="text-center">
+              <div className="text-7xl mb-2">{emoji}</div>
+              <p className="text-xs font-medium" style={{ color: '#ccc' }}>사진 없음</p>
+            </div>
+          </div>
+        )}
 
         {/* 상품 정보 카드 */}
         <div className="card-cartoon mb-4">
