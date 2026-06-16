@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { signOut } from '../../auth/actions'
@@ -57,7 +58,7 @@ export default async function ProductDetailPage({
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('nickname')
+    .select('nickname, avatar_url, bio')
     .eq('id', product.user_id)
     .single()
 
@@ -221,19 +222,35 @@ export default async function ProductDetailPage({
 
         {/* 판매자 정보 */}
         <div className="card-cartoon mb-6" style={{ padding: '16px 20px' }}>
-          <div className="flex items-center gap-3">
-            <div className="text-3xl w-11 h-11 rounded-full border-2 flex items-center justify-center bg-amber-50"
-              style={{ borderColor: 'var(--goguma-dark)' }}>
-              🍠
-            </div>
-            <div>
+          <div className="flex items-start gap-3">
+            {profile?.avatar_url ? (
+              <Image
+                src={profile.avatar_url}
+                alt={profile.nickname ?? '판매자'}
+                width={44}
+                height={44}
+                className="w-11 h-11 rounded-full object-cover border-2 flex-shrink-0"
+                style={{ borderColor: 'var(--goguma-dark)' }}
+              />
+            ) : (
+              <div className="text-3xl w-11 h-11 rounded-full border-2 flex items-center justify-center bg-amber-50 flex-shrink-0"
+                style={{ borderColor: 'var(--goguma-dark)' }}>
+                🍠
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
               <p className="text-xs font-medium" style={{ color: '#aaa' }}>판매자</p>
               <p className="font-black text-base" style={{ color: 'var(--goguma-dark)' }}>
                 {profile?.nickname ?? '고구마 이웃'}
               </p>
+              {profile?.bio && (
+                <p className="text-xs font-medium mt-1 whitespace-pre-line" style={{ color: '#777' }}>
+                  {profile.bio}
+                </p>
+              )}
             </div>
             {isMyProduct && (
-              <span className="ml-auto px-2 py-1 rounded-full text-xs font-bold"
+              <span className="ml-auto px-2 py-1 rounded-full text-xs font-bold flex-shrink-0"
                 style={{ background: '#fff3e0', color: 'var(--goguma-orange)', border: '1.5px solid var(--goguma-orange)' }}>
                 내 판매글
               </span>
