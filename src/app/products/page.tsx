@@ -38,12 +38,23 @@ export default async function ProductsPage({
     .order('created_at', { ascending: false })
 
   const productIds = products?.map(p => p.id) ?? []
-  const { data: likesData } = productIds.length > 0
-    ? await supabase.from('likes').select('product_id').in('product_id', productIds)
-    : { data: [] }
+
+  const [{ data: likesData }, { data: commentsData }] = await Promise.all([
+    productIds.length > 0
+      ? supabase.from('likes').select('product_id').in('product_id', productIds)
+      : Promise.resolve({ data: [] }),
+    productIds.length > 0
+      ? supabase.from('comments').select('product_id').in('product_id', productIds)
+      : Promise.resolve({ data: [] }),
+  ])
 
   const likeCountMap = (likesData ?? []).reduce((acc, l) => {
     acc[l.product_id] = (acc[l.product_id] ?? 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const commentCountMap = (commentsData ?? []).reduce((acc, c) => {
+    acc[c.product_id] = (acc[c.product_id] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
 
@@ -164,16 +175,23 @@ export default async function ProductsPage({
                   </p>
                 </div>
 
-                {/* 가격 + 좋아요 */}
+                {/* 가격 + 좋아요 + 댓글 */}
                 <div className="text-right flex-shrink-0">
                   <p className="font-black text-base" style={{ color: 'var(--goguma-orange)' }}>
                     {formatPrice(product.price)}
                   </p>
-                  {(likeCountMap[product.id] ?? 0) > 0 && (
-                    <p className="text-xs font-medium mt-1" style={{ color: '#e53e3e' }}>
-                      ❤️ {likeCountMap[product.id]}
-                    </p>
-                  )}
+                  <div className="flex items-center justify-end gap-2 mt-1">
+                    {(likeCountMap[product.id] ?? 0) > 0 && (
+                      <span className="text-xs font-medium" style={{ color: '#e53e3e' }}>
+                        ❤️ {likeCountMap[product.id]}
+                      </span>
+                    )}
+                    {(commentCountMap[product.id] ?? 0) > 0 && (
+                      <span className="text-xs font-medium" style={{ color: '#888' }}>
+                        💬 {commentCountMap[product.id]}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
             )
